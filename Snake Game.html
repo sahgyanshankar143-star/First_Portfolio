@@ -122,4 +122,69 @@ function togglePause() {
   }
 }
 
+/* ===== GAME LOOP ===== */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Food
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x, food.y, box, box);
+
+  // Snake
+  ctx.fillStyle = "lime";
+  snake.forEach(seg => ctx.fillRect(seg.x, seg.y, box, box));
+
+  let head = { ...snake[0] };
+
+  if (direction === "UP") head.y -= box;
+  if (direction === "DOWN") head.y += box;
+  if (direction === "LEFT") head.x -= box;
+  if (direction === "RIGHT") head.x += box;
+
+  // Wall collision
+  if (
+    head.x < 0 ||
+    head.y < 0 ||
+    head.x >= canvas.width ||
+    head.y >= canvas.height
+  ) {
+    alert("Game Over! Score: " + score);
+    location.reload();
+  }
+
+  // Food collision
+  if (head.x === food.x && head.y === food.y) {
+    score++;
+    food = {
+      x: Math.floor(Math.random() * (canvas.width / box)) * box,
+      y: Math.floor(Math.random() * (canvas.height / box)) * box
+    };
+  } else {
+    snake.pop();
+  }
+
+  // Self collision
+  for (let i = 1; i < snake.length; i++) {
+    if (head.x === snake[i].x && head.y === snake[i].y) {
+      alert("Game Over! Score: " + score);
+      location.reload();
+    }
+  }
+
+  snake.unshift(head);
+
+  // Score
+  ctx.fillStyle = "white";
+  ctx.font = "18px Arial";
+  ctx.fillText("Score: " + score, 10, 20);
+}
+
+/* ===== START GAME ===== */
+gameInterval = setInterval(draw, 120);
+</script>
+
+</body>
+</html>
+
+
 
