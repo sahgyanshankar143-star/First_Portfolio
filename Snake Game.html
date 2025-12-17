@@ -14,11 +14,11 @@
     align-items: center;
     color: white;
     font-family: Arial;
+    touch-action: none;
+    overflow: hidden;
   }
 
-  h2 {
-    margin: 10px 0;
-  }
+  h2 { margin: 10px 0; }
 
   canvas {
     width: 90vw;
@@ -65,7 +65,11 @@
 </div>
 
 <script>
-/* ===== CANVAS SETUP ===== */
+/* ===== SOUND EFFECTS ===== */
+const eatSound = new Audio("eat.mp3");
+const gameOverSound = new Audio("gameover.mp3");
+
+/* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -79,16 +83,21 @@ window.addEventListener("resize", resizeCanvas);
 
 const box = 20;
 let score = 0;
+let gameOver = false;
 
 /* ===== SNAKE ===== */
 let snake = [{ x: box * 5, y: box * 5 }];
 let direction = "RIGHT";
 
 /* ===== FOOD ===== */
-let food = {
-  x: Math.floor(Math.random() * (canvas.width / box)) * box,
-  y: Math.floor(Math.random() * (canvas.height / box)) * box
-};
+function randomFood() {
+  const max = Math.floor(canvas.width / box);
+  return {
+    x: Math.floor(Math.random() * max) * box,
+    y: Math.floor(Math.random() * max) * box
+  };
+}
+let food = randomFood();
 
 /* ===== CONTROLS ===== */
 function setDir(dir) {
@@ -97,15 +106,13 @@ function setDir(dir) {
   if (dir === "LEFT" && direction !== "RIGHT") direction = dir;
   if (dir === "RIGHT" && direction !== "LEFT") direction = dir;
 }
+
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowUp") setDir("UP");
   if (e.key === "ArrowDown") setDir("DOWN");
   if (e.key === "ArrowLeft") setDir("LEFT");
   if (e.key === "ArrowRight") setDir("RIGHT");
-
-  if (e.code === "Space") {
-    togglePause();
-  }
+  if (e.code === "Space") togglePause();
 });
 
 /* ===== PAUSE ===== */
@@ -113,6 +120,7 @@ let gameInterval;
 let isPaused = false;
 
 function togglePause() {
+  if (gameOver) return;
   if (isPaused) {
     gameInterval = setInterval(draw, 120);
     isPaused = false;
@@ -142,23 +150,17 @@ function draw() {
   if (direction === "RIGHT") head.x += box;
 
   // Wall collision
-  if (
-    head.x < 0 ||
-    head.y < 0 ||
-    head.x >= canvas.width ||
-    head.y >= canvas.height
-  ) {
-    alert("Game Over! Score: " + score);
-    location.reload();
+  if (head.x < 0 || head.y < 0 ||
+      head.x >= canvas.width || head.y >= canvas.height) {
+    endGame();
+    return;
   }
 
   // Food collision
   if (head.x === food.x && head.y === food.y) {
     score++;
-    food = {
-      x: Math.floor(Math.random() * (canvas.width / box)) * box,
-      y: Math.floor(Math.random() * (canvas.height / box)) * box
-    };
+    eatSound.play();   // 🔊 EAT SOUND
+    food = randomFood();
   } else {
     snake.pop();
   }
@@ -166,8 +168,8 @@ function draw() {
   // Self collision
   for (let i = 1; i < snake.length; i++) {
     if (head.x === snake[i].x && head.y === snake[i].y) {
-      alert("Game Over! Score: " + score);
-      location.reload();
+      endGame();
+      return;
     }
   }
 
@@ -179,12 +181,25 @@ function draw() {
   ctx.fillText("Score: " + score, 10, 20);
 }
 
-/* ===== START GAME ===== */
+/* ===== GAME OVER ===== */
+function endGame() {
+  clearInterval(gameInterval);
+  gameOver = true;
+  gameOverSound.play();   // 🔊 GAME OVER SOUND
+
+  ctx.fillStyle = "white";
+  ctx.font = "28px Arial";
+  ctx.fillText("Game Over", canvas.width / 2 - 80, canvas.height / 2);
+  ctx.fillText("Score: " + score, canvas.width / 2 - 65, canvas.height / 2 + 40);
+}
+
+/* ===== START ===== */
 gameInterval = setInterval(draw, 120);
 </script>
 
 </body>
 </html>
+
 
 
 
